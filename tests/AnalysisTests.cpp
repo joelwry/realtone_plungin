@@ -194,3 +194,48 @@ RT_TEST(notes_can_be_disabled_before_rendering)
     auto seq = notesToSequence(rep.notes);
     CHECK(seq.noteCount == 2);
 }
+
+RT_TEST(analysis_splits_a_semitone_step_when_the_old_note_rings_over)
+{
+    // Second note enters while the first is still decaying (sampled instruments with long releases).
+    AudioClip c;
+    c.sampleRate = 44100.0;
+    c.channels.emplace_back(static_cast<std::size_t>(44100 * 3), 0.0f);
+    auto add = [&](double start, double dur, double fade, int midi, double amp) {
+        double phase = 0;
+        const double hz = midiToHz(midi);
+        for (std::size_t i = 0; i < static_cast<std::size_t>((dur + fade) * 44100); ++i)
+        {
+            const double t = static_cast<double>(i) / 44100.0;
+            phase += 2 * kPi * hz / 44100.0;
+            const double env = std::min(1.0, t / 0.02) * (t < dur ? 1.0 : std::max(0.0, 1.0 - (t - dur) / fade));
+            const auto idx = static_cast<std::size_t>(start * 44100) + i;
+            if (idx < c.channels[0].size())
+                c.channels[0][idx] += static_cast<float>(amp * env * (std::sin(phase) + 0.4 * std::sin(2 * phase)));
+        }
+    };
+    add(0.1, 1.0, 0.15, 72, 0.4);  // rings on briefly after its nominal end
+    add(1.1, 1.0, 0.3, 71, 0.4);
+    auto rep = analyseMonophonic(c);
+    CHECK(rep.ok);
+    CHECK_MSG(rep.notes.size() == 2, "got " << rep.notes.size());
+    if (rep.notes.size() == 2)
+    {
+        CHECK(rep.notes[0].midiNote == 72 && rep.notes[1].midiNote == 71);
+        CHECK_NEAR(rep.notes[1].startSeconds, 1.1, 0.08);
+    }
+}
+
+RT_TEST(analysis_pitches_high_notes_accurately)
+{
+    // Decimated analysis loses resolution above ~1 kHz unless the period is refined at full rate.
+    auto rep = analyseMonophonic(melody({{0.1, 0.4, 84}, {0.6, 0.4, 86}, {1.1, 0.4, 88}, {1.6, 0.4, 91}}));
+    CHECK(rep.ok);
+    CHECK(rep.notes.size() == 4);
+    const int expect[] = {84, 86, 88, 91};
+    for (std::size_t i = 0; i < std::min<std::size_t>(rep.notes.size(), 4); ++i)
+    {
+        CHECK(rep.notes[i].midiNote == expect[i]);
+        CHECK(std::fabs(rep.notes[i].meanCents) < 12.0f);
+    }
+}

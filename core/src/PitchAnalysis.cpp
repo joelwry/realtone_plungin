@@ -291,8 +291,18 @@ AnalysisReport analyseMonophonic(const AudioClip& source, const AnalysisOptions&
             continue;
         }
 
-        // Pitch jump relative to the running reference of this segment.
-        const double dev = smooth[static_cast<std::size_t>(f)] - segRef;
+        // Compare with the pitch a few frames back, so a step that develops over the 46 ms
+        // analysis window is still measured against where the note was before it moved.
+        double ref = segRef;
+        {
+            std::vector<double> w;
+            for (int j = std::max(start, f - 30); j <= f - 5; ++j)
+                if (smooth[static_cast<std::size_t>(j)] > 0.0)
+                    w.push_back(smooth[static_cast<std::size_t>(j)]);
+            if (w.size() >= 3)
+                ref = median(w);
+        }
+        const double dev = smooth[static_cast<std::size_t>(f)] - ref;
         bool split = std::fabs(dev) > options.splitSemitones;
         if (split)
         {
@@ -304,6 +314,14 @@ AnalysisReport analyseMonophonic(const AudioClip& source, const AnalysisOptions&
                     ++agree;
             split = agree >= 3;
         }
+        int boundary = f;
+        if (split)
+        {
+            // Walk back to where the pitch started leaving the old note.
+            while (boundary - 1 > start + 2 && smooth[static_cast<std::size_t>(boundary - 1)] > 0.0 &&
+                   std::fabs(smooth[static_cast<std::size_t>(boundary - 1)] - ref) > 0.15)
+                --boundary;
+        }
         // Repeated note: sudden level rise on the same pitch.
         if (!split && f >= 3)
         {
@@ -314,13 +332,9 @@ AnalysisReport analyseMonophonic(const AudioClip& source, const AnalysisOptions&
         }
         if (split)
         {
-            closeSeg(f);
-            start = f;
+            closeSeg(boundary);
+            start = boundary;
             segRef = smooth[static_cast<std::size_t>(f)];
-        }
-        else
-        {
-            segRef = 0.9 * segRef + 0.1 * smooth[static_cast<std::size_t>(f)];  // follow slow drift and vibrato
         }
     }
     closeSeg(gapRun > 0 ? numFrames - gapRun : numFrames);
@@ -352,6 +366,9 @@ AnalysisReport analyseMonophonic(const AudioClip& source, const AnalysisOptions&
             peakDb = std::max(peakDb, frames[static_cast<std::size_t>(f)].rmsDb);
         }
         if (pitches.empty())
+            continue;
+        // Short, weakly periodic fragments are almost always note-change artefacts (octave slips).
+        if (dur < 0.1 && conf / voicedCount < 0.7)
             continue;
 
         DetectedNote n;

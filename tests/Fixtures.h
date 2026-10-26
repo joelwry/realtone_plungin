@@ -48,7 +48,7 @@ inline realtone::AudioClip toneClip(double hz, double seconds, double rate, int 
 inline void writeText(const std::filesystem::path& p, const std::string& text)
 {
     std::filesystem::create_directories(p.parent_path());
-    std::ofstream(p) << text;
+    std::ofstream(p, std::ios::binary) << text;  // binary: sizes and hashes must match byte for byte on Windows too
 }
 
 struct TestInstrument
