@@ -1,3 +1,4 @@
+#include "../studio/PathUtil.h"
 #include "LibraryPanel.h"
 
 #include "InstrumentArt.h"
@@ -94,10 +95,10 @@ void LibraryPanel::paintListBoxItem(int row, juce::Graphics& g, int width, int h
     const int x = height + 6;
     g.setColour(text);
     g.setFont(ui(14.0f, true));
-    g.drawText(juce::String(e.name), x, 4, width - x - 150, 20, juce::Justification::centredLeft);
+    g.drawText(realtone::studio::fromStd(e.name), x, 4, width - x - 150, 20, juce::Justification::centredLeft);
     g.setColour(textFaint);
     g.setFont(ui(12.0f));
-    g.drawText(juce::String(e.packName) + "  -  " + juce::String(e.category), x, 24, width - x - 150, 16, juce::Justification::centredLeft);
+    g.drawText(realtone::studio::fromStd(e.packName) + "  -  " + realtone::studio::fromStd(e.category), x, 24, width - x - 150, 16, juce::Justification::centredLeft);
 
     juce::Colour c = ok;
     switch (e.state)
@@ -151,21 +152,21 @@ void LibraryPanel::updateDetails()
         t = "Select an instrument to see its details.";
     else
     {
-        t << juce::String(e->name) << "\n" << juce::String(e->description) << "\n\n";
+        t << realtone::studio::fromStd(e->name) << "\n" << realtone::studio::fromStd(e->description) << "\n\n";
         t << "Status: " << realtone::toString(e->state);
         if (e->missingFiles > 0) t << "  (" << e->missingFiles << " file(s) missing)";
         if (e->damagedFiles > 0) t << "  (" << e->damagedFiles << " file(s) damaged)";
         t << "\n";
         if (!e->external)
             t << "Download size: " << mb(e->downloadBytes) << "\n";
-        t << "Location: " << juce::String(e->sfzPath.string()) << "\n\n";
-        t << "License: " << juce::String(e->license.name) << "\n";
-        if (e->license.url.size() > 0) t << juce::String(e->license.url) << "\n";
-        if (!e->license.attribution.empty()) t << "\n" << juce::String(e->license.attribution) << "\n";
+        t << "Location: " << realtone::studio::toJuceString(e->sfzPath) << "\n\n";
+        t << "License: " << realtone::studio::fromStd(e->license.name) << "\n";
+        if (e->license.url.size() > 0) t << realtone::studio::fromStd(e->license.url) << "\n";
+        if (!e->license.attribution.empty()) t << "\n" << realtone::studio::fromStd(e->license.attribution) << "\n";
         if (e->external)
             t << "\nThis library was imported by you. RealTone Studio does not verify its files or its license.\n";
         const auto report = manager_.lastVerifyReport();
-        if (report.isNotEmpty() && report.startsWith(juce::String(e->name)))
+        if (report.isNotEmpty() && report.startsWith(realtone::studio::fromStd(e->name)))
             t << "\nLast check: " << report << "\n";
     }
     details_.setText(t, false);

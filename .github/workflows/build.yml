@@ -1,0 +1,129 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build xvfb libasound2-dev libx11-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libfreetype-dev libgl1-mesa-dev libcurl4-openssl-dev libfontconfig1-dev
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DREALTONE_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Core tests
+        run: ./build/tests/realtone_tests
+
+      - name: Studio tests (processor, state, presets, editor layout, standalone workflows)
+        run: xvfb-run -a ./build/tests_studio/realtone_studio_tests_artefacts/Release/realtone_studio_tests
+        env:
+          REALTONE_TEST_OUTPUT: ${{ github.workspace }}/build/test-output
+
+      - name: pluginval, strictness 10 (includes editor tests)
+        run: |
+          curl -sSL -o pluginval.zip https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_Linux.zip
+          unzip -q pluginval.zip
+          xvfb-run -a -s "-screen 0 1600x1000x24" ./pluginval --strictness-level 10 --validate-in-process --timeout-ms 300000 \
+            "build/plugin/RealToneInstrument_artefacts/Release/VST3/RealTone Studio.vst3"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-test-output
+          path: build/test-output
+          if-no-files-found: ignore
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = (Select-String -Path CMakeLists.txt -Pattern 'project\(RealToneStudio VERSION ([0-9.]+)').Matches.Groups[1].Value
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Version $v"
+
+      - name: Install NSIS
+        shell: pwsh
+        run: choco install nsis --no-progress -y
+
+      - name: Build, test, stage, package
+        shell: pwsh
+        run: packaging/build-windows.ps1 -Version ${{ steps.ver.outputs.version }}
+        env:
+          SIGN_PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
+          SIGN_PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
+
+      - name: Real sample library on Windows (download, checksum, render)
+        shell: pwsh
+        run: packaging/check-real-library.ps1 -Cli dist\stage\app\realtone-cli.exe
+
+      - name: Get pluginval
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://github.com/Tracktion/pluginval/releases/latest/download/pluginval_Windows.zip -OutFile pluginval.zip
+          Expand-Archive pluginval.zip -DestinationPath pluginval
+          Get-ChildItem pluginval
+
+      - name: pluginval on the built VST3 (strictness 10)
+        shell: pwsh
+        run: |
+          & .\pluginval\pluginval.exe --strictness-level 10 --validate-in-process --timeout-ms 300000 "dist\stage\vst3\RealTone Studio.vst3"
+          if ($LASTEXITCODE -ne 0) { throw "pluginval failed ($LASTEXITCODE)" }
+
+      - name: Installer, window behaviour, uninstall
+        shell: pwsh
+        run: packaging/verify-installer.ps1 -Setup dist\RealToneStudio-${{ steps.ver.outputs.version }}-win64-setup.exe -Pluginval "$PWD\pluginval\pluginval.exe" -ExpectedVersion ${{ steps.ver.outputs.version }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            dist/RealToneStudio-*-win64-setup.exe
+            dist/RealToneStudio-*-win64-portable.zip
+            dist/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-test-output
+          path: dist/test-output
+          if-no-files-found: ignore
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: release
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          ls -la release
+          (cd release && sha256sum -c SHA256SUMS.txt)
+          gh release create "$tag" release/* --title "RealTone Studio ${tag#v}" --notes-file CHANGELOG.md --verify-tag

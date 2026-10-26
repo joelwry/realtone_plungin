@@ -9,12 +9,18 @@
 #include "realtone/Renderer.h"
 #include "realtone/Sha256.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <map>
 #include <sstream>
+#include <vector>
 
 using namespace realtone;
 namespace fs = std::filesystem;
@@ -82,13 +88,13 @@ std::string get(const Args& a, const char* k, const char* def = "")
 
 std::shared_ptr<Instrument> loadInst(const Args& a)
 {
-    const fs::path sfz = get(a, "instrument");
+    const fs::path sfz = fs::u8path(get(a, "instrument"));
     if (sfz.empty())
     {
         std::fprintf(stderr, "--instrument is required\n");
         return nullptr;
     }
-    const fs::path root = a.count("root") ? fs::path(get(a, "root")) : sfz.parent_path();
+    const fs::path root = a.count("root") ? fs::u8path(get(a, "root")) : sfz.parent_path();
     LoadOptions o;
     o.progress = [](float f, const std::string& s) { std::fprintf(stderr, "\r  loading %3.0f%%  %-40s", f * 100.0f, s.c_str()); };
     auto r = loadInstrument(sfz, root, o);
@@ -139,7 +145,7 @@ bool writeOut(const Args& a, const AudioClip& clip)
     w.format = bits == "16" ? WavSampleFormat::Pcm16 : bits == "32f" ? WavSampleFormat::Float32 : WavSampleFormat::Pcm24;
     w.overwrite = a.count("overwrite") != 0;
     std::string err;
-    if (!writeWavFile(get(a, "out"), clip, w, &err))
+    if (!writeWavFile(fs::u8path(get(a, "out")), clip, w, &err))
     {
         std::fprintf(stderr, "Cannot write output: %s\n", err.c_str());
         return false;
@@ -168,7 +174,7 @@ int cmdRender(const Args& a)
     auto inst = loadInst(a);
     if (!inst)
         return 1;
-    auto midi = parseMidiFile(get(a, "midi"));
+    auto midi = parseMidiFile(fs::u8path(get(a, "midi")));
     if (!midi.ok)
     {
         std::fprintf(stderr, "MIDI error: %s\n", midi.error.c_str());
@@ -205,7 +211,7 @@ void printAnalysis(const AnalysisReport& rep)
 
 int cmdAnalyse(const Args& a)
 {
-    auto d = decodeAudioFile(get(a, "audio"));
+    auto d = decodeAudioFile(fs::u8path(get(a, "audio")));
     if (!d.ok)
     {
         std::fprintf(stderr, "Cannot read audio: %s\n", d.error.c_str());
@@ -226,7 +232,7 @@ int cmdConvert(const Args& a)
     auto inst = loadInst(a);
     if (!inst)
         return 1;
-    auto d = decodeAudioFile(get(a, "audio"));
+    auto d = decodeAudioFile(fs::u8path(get(a, "audio")));
     if (!d.ok)
     {
         std::fprintf(stderr, "Cannot read audio: %s\n", d.error.c_str());
@@ -254,7 +260,7 @@ int cmdConvert(const Args& a)
 
 int cmdVerify(const Args& a)
 {
-    std::ifstream in(get(a, "manifest"));
+    std::ifstream in(fs::u8path(get(a, "manifest")));
     std::stringstream ss;
     ss << in.rdbuf();
     auto m = parsePackManifest(ss.str());
@@ -264,7 +270,7 @@ int cmdVerify(const Args& a)
         return 1;
     }
     LibraryCatalog cat;
-    cat.setLibraryRoot(get(a, "library"));
+    cat.setLibraryRoot(fs::u8path(get(a, "library")));
     cat.addPack(m.pack);
     int bad = 0;
     for (const auto& i : m.pack.instruments)
@@ -281,8 +287,43 @@ int cmdVerify(const Args& a)
 
 }  // namespace
 
+namespace {
+// Arguments as UTF-8 on every platform. On Windows the narrow argv is in the ANSI code page, which
+// cannot carry every file name, so the wide command line is converted instead.
+std::vector<std::string> utf8Args(int argc, char** argv)
+{
+    std::vector<std::string> out;
+#ifdef _WIN32
+    (void)argc;
+    (void)argv;
+    int n = 0;
+    LPWSTR* w = CommandLineToArgvW(GetCommandLineW(), &n);
+    for (int i = 0; w != nullptr && i < n; ++i)
+    {
+        const int len = WideCharToMultiByte(CP_UTF8, 0, w[i], -1, nullptr, 0, nullptr, nullptr);
+        std::string s(static_cast<std::size_t>(len > 0 ? len - 1 : 0), '\0');
+        if (len > 1)
+            WideCharToMultiByte(CP_UTF8, 0, w[i], -1, s.data(), len, nullptr, nullptr);
+        out.push_back(std::move(s));
+    }
+    if (w != nullptr)
+        LocalFree(w);
+#else
+    for (int i = 0; i < argc; ++i)
+        out.emplace_back(argv[i]);
+#endif
+    return out;
+}
+}  // namespace
+
 int main(int argc, char** argv)
 {
+    const auto args = utf8Args(argc, argv);
+    std::vector<char*> ptrs;
+    for (const auto& a : args)
+        ptrs.push_back(const_cast<char*>(a.c_str()));
+    argc = static_cast<int>(ptrs.size());
+    argv = ptrs.data();
     if (argc < 2 || std::strcmp(argv[1], "--help") == 0 || std::strcmp(argv[1], "-h") == 0)
     {
         std::fputs(kUsage, stdout);

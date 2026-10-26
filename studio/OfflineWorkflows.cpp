@@ -1,3 +1,4 @@
+#include "PathUtil.h"
 #include "OfflineWorkflows.h"
 
 #include "Paths.h"
@@ -9,7 +10,7 @@ RenderOutcome renderWithInstrument(InstrumentManager& manager, const realtone::I
                                    const realtone::Sequence& sequence, const realtone::RenderSettings& settings, BackgroundTask& task)
 {
     RenderOutcome out;
-    task.report(0.0f, "Loading " + juce::String(instrument.name));
+    task.report(0.0f, "Loading " + realtone::studio::fromStd(instrument.name));
     std::string error;
     auto inst = manager.acquire(instrument, error,
                                 [&task](float f, const std::string& what) { task.report(0.3f * f, juce::String(what)); }, task.cancelFlag());
@@ -50,7 +51,7 @@ ImportOutcome importAudio(const juce::File& file, BackgroundTask& task)
 {
     ImportOutcome out;
     task.report(0.0f, "Reading " + file.getFileName());
-    auto decoded = realtone::decodeAudioFile(std::filesystem::path(file.getFullPathName().toStdString()));
+    auto decoded = realtone::decodeAudioFile(toPath(file));
     if (!decoded.ok)
     {
         out.error = juce::String(decoded.error);
@@ -90,7 +91,7 @@ ExportOutcome exportWav(const realtone::AudioClip& clip, const juce::File& desti
     o.format = format;
     o.overwrite = allowOverwrite;
     std::string err;
-    if (!realtone::writeWavFile(std::filesystem::path(destination.getFullPathName().toStdString()), clip, o, &err))
+    if (!realtone::writeWavFile(toPath(destination), clip, o, &err))
     {
         out.error = juce::String(err);
         logMessage("Export failed: " + out.error);

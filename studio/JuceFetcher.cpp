@@ -1,3 +1,4 @@
+#include "PathUtil.h"
 #include "JuceFetcher.h"
 
 #include <juce_core/juce_core.h>
@@ -33,7 +34,7 @@ realtone::FetchResult JuceFetcher::fetch(const std::string& url, const std::file
         return result;
     }
 
-    juce::File out(juce::String(destination.string()));
+    juce::File out(toJuceString(destination));
     out.deleteFile();
     juce::FileOutputStream file(out);
     if (!file.openedOk())

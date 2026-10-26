@@ -1,3 +1,4 @@
+#include "PathUtil.h"
 #include "AppContext.h"
 
 #include "Parameters.h"
@@ -77,7 +78,7 @@ const realtone::InstrumentEntry* AppContext::currentInstrument() const
 juce::String AppContext::currentInstrumentName() const
 {
     const auto* e = currentInstrument();
-    return e != nullptr ? juce::String(e->name) : juce::String();
+    return e != nullptr ? realtone::studio::fromStd(e->name) : juce::String();
 }
 
 }  // namespace realtone::studio

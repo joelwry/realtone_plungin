@@ -15,9 +15,12 @@ Anyone who wants to distribute a derived work without releasing its source must 
 commercial JUCE license from Raw Material Software.
 
 JUCE includes or builds on further components (for example HarfBuzz, SheenBidi, FLAC, Ogg Vorbis,
-zlib, libpng, libjpeg and the Steinberg VST3 SDK, which is MIT licensed). Their notices are in the
-JUCE source tree under modules/*/ and in JUCE's LICENSE.md.
+zlib, libpng and libjpeg). Their notices are in the JUCE source tree under modules/*/ and in JUCE's
+LICENSE.md.
 
+Steinberg VST3 SDK 3.7.12 (bundled in JUCE)
+Offered under the Steinberg VST3 License or the GNU General Public License v3. This program uses it
+under the GPLv3 option, https://www.gnu.org/licenses/gpl-3.0.html.
 VST is a trademark of Steinberg Media Technologies GmbH.
 
 --------------------------------------------------------------------------------

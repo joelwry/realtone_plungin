@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 
+# Static MSVC runtime: the installer and the portable zip must not depend on the VC++ redistributable.
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
+endif()
+
 project(RealToneStudio VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -14,6 +19,10 @@ set(REALTONE_JUCE_DIR "" CACHE PATH "Use an existing JUCE checkout instead of fe
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+endif()
+
+if(MSVC)
+    add_compile_options(/utf-8 /bigobj /MP)
 endif()
 
 include(CTest)

@@ -1,3 +1,4 @@
+#include "PathUtil.h"
 #include "InstrumentManager.h"
 
 #include "JuceFetcher.h"
@@ -51,7 +52,7 @@ struct InstrumentManager::Impl
 
 InstrumentManager::InstrumentManager() : impl_(std::make_unique<Impl>())
 {
-    catalog_.setLibraryRoot(std::filesystem::path(Settings::get().libraryRoot().getFullPathName().toStdString()));
+    catalog_.setLibraryRoot(toPath(Settings::get().libraryRoot()));
     for (const auto& text : bundledManifestTexts())
     {
         auto parsed = realtone::parsePackManifest(text.toStdString());
@@ -72,6 +73,8 @@ InstrumentManager::~InstrumentManager()
     impl_->pool.removeAllJobs(true, 8000);
 }
 
+juce::File InstrumentManager::libraryRoot() const { return toJuceFile(catalog_.libraryRoot()); }
+
 void InstrumentManager::refreshCatalog()
 {
     catalog_.refresh();
@@ -81,7 +84,7 @@ void InstrumentManager::refreshCatalog()
 void InstrumentManager::setLibraryRoot(const juce::File& dir)
 {
     Settings::get().setLibraryRoot(dir);
-    catalog_.setLibraryRoot(std::filesystem::path(dir.getFullPathName().toStdString()));
+    catalog_.setLibraryRoot(toPath(dir));
     catalog_.refresh();
     const auto id = status_.instrumentId;
     sendChangeMessage();
@@ -151,8 +154,8 @@ void InstrumentManager::selectInstrument(const juce::String& id)
     if (!sfzPresent)
     {
         s.state = LoadStatus::State::NotInstalled;
-        s.message = entry->external ? "The SFZ file was moved or deleted: " + juce::String(entry->sfzPath.string())
-                                    : "Samples for " + juce::String(entry->name.c_str()) + " are not installed (" +
+        s.message = entry->external ? "The SFZ file was moved or deleted: " + toJuceString(entry->sfzPath)
+                                    : "Samples for " + realtone::studio::fromStd(entry->name) + " are not installed (" +
                                           juce::String(static_cast<double>(entry->downloadBytes) / (1024.0 * 1024.0), 0) + " MB download).";
         current_.reset();
         swap_.post(nullptr);  // silence, never another instrument
@@ -161,7 +164,7 @@ void InstrumentManager::selectInstrument(const juce::String& id)
     }
 
     s.state = LoadStatus::State::Loading;
-    s.message = "Loading " + juce::String(entry->name.c_str()) + "...";
+    s.message = "Loading " + realtone::studio::fromStd(entry->name) + "...";
     setStatus(s);
 
     const auto entryCopy = *entry;
@@ -186,7 +189,7 @@ void InstrumentManager::selectInstrument(const juce::String& id)
                 return;  // a newer selection replaced this one
             auto& self = *weak;
             LoadStatus done;
-            done.instrumentId = juce::String(entryCopy.id);
+            done.instrumentId = realtone::studio::fromStd(entryCopy.id);
             if (inst == nullptr)
             {
                 done.state = LoadStatus::State::Failed;
@@ -209,7 +212,7 @@ void InstrumentManager::selectInstrument(const juce::String& id)
                 else
                 {
                     done.state = LoadStatus::State::Ready;
-                    done.message = juce::String(entryCopy.name.c_str()) + " is ready (" +
+                    done.message = realtone::studio::fromStd(entryCopy.name) + " is ready (" +
                                    juce::String(static_cast<double>(inst->memoryBytes()) / (1024.0 * 1024.0), 0) + " MB).";
                 }
             }
@@ -400,7 +403,7 @@ void InstrumentManager::loadExternalsFromSettings()
             continue;
         externals_.push_back({parts[0], parts[1], parts[2], parts[3], parts[4]});
         catalog_.addExternal(parts[0].toStdString(), parts[1].toStdString(), parts[2].toStdString(), parts[3].toStdString(),
-                             std::filesystem::path(parts[4].toStdString()));
+                             toPath(parts[4]));
     }
 }
 

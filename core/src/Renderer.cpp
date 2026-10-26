@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "realtone/Renderer.h"
 
 #include <algorithm>

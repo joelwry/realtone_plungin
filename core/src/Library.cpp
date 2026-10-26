@@ -1,3 +1,4 @@
+#include <cctype>
 #include "realtone/Library.h"
 
 #include "realtone/Sha256.h"

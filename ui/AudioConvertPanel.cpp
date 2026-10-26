@@ -1,3 +1,4 @@
+#include "../studio/PathUtil.h"
 #include "AudioConvertPanel.h"
 
 #include "../studio/Paths.h"
@@ -118,8 +119,8 @@ void AudioConvertPanel::timerCallback()
 
     const auto* e = ctx_.currentInstrument();
     juce::String text = e == nullptr ? "No instrument chosen. Pick one on the Play page."
-                        : e->state == realtone::InstallState::NotInstalled ? "Instrument: " + juce::String(e->name) + " - samples are not installed. Install them on the Library page."
-                                                                           : "Instrument: " + juce::String(e->name);
+                        : e->state == realtone::InstallState::NotInstalled ? "Instrument: " + realtone::studio::fromStd(e->name) + " - samples are not installed. Install them on the Library page."
+                                                                           : "Instrument: " + realtone::studio::fromStd(e->name);
     if (instrument_.getText() != text)
     {
         instrument_.setText(text, juce::dontSendNotification);
@@ -332,7 +333,7 @@ void AudioConvertPanel::chooseDestination()
     if (!analysed_ || notes_.empty() || entry == nullptr || task_.isRunning())
         return;
     const auto folder = juce::File(Settings::get().getString(keys::lastExportFolder, file_.getParentDirectory().getFullPathName()));
-    const auto suggestion = suggestOutputFile(folder.isDirectory() ? folder : file_.getParentDirectory(), file_.getFileNameWithoutExtension(), juce::String(entry->name));
+    const auto suggestion = suggestOutputFile(folder.isDirectory() ? folder : file_.getParentDirectory(), file_.getFileNameWithoutExtension(), realtone::studio::fromStd(entry->name));
     chooser_ = std::make_unique<juce::FileChooser>("Save the converted audio as WAV", suggestion, "*.wav");
     chooser_->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::warnAboutOverwriting,
                           [safe = juce::Component::SafePointer<AudioConvertPanel>(this)](const juce::FileChooser& fc) {
@@ -383,7 +384,7 @@ void AudioConvertPanel::convertTo(const juce::File& destination, bool allowOverw
             juce::String msg = "Saved " + destination.getFullPathName() + "  (" + juce::String(outcome.clip->durationSeconds(), 1) + " s, " +
                                juce::String(outcome.notes) + " notes).";
             if (bendSkipped)
-                msg << "  Pitch slides were not applied because " << juce::String(entryCopy.name) << " cannot bend notes.";
+                msg << "  Pitch slides were not applied because " << realtone::studio::fromStd(entryCopy.name) << " cannot bend notes.";
             if (confidence < 0.75)
                 msg << "  Detection confidence was low, so expect mistakes.";
             for (const auto& w : outcome.warnings)

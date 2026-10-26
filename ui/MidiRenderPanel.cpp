@@ -1,3 +1,4 @@
+#include "../studio/PathUtil.h"
 #include "MidiRenderPanel.h"
 
 #include "../studio/Paths.h"
@@ -124,11 +125,11 @@ void MidiRenderPanel::updateInstrumentLine()
     }
     else if (e->state == realtone::InstallState::NotInstalled)
     {
-        text = "Instrument: " + juce::String(e->name) + " - samples are not installed. Install them on the Library page.";
+        text = "Instrument: " + realtone::studio::fromStd(e->name) + " - samples are not installed. Install them on the Library page.";
         colour = theme::warn;
     }
     else
-        text = "Instrument: " + juce::String(e->name) + (st.state == LoadStatus::State::ReadyPartial ? "  (some samples missing)" : "");
+        text = "Instrument: " + realtone::studio::fromStd(e->name) + (st.state == LoadStatus::State::ReadyPartial ? "  (some samples missing)" : "");
     if (instrument_.getText() != text)
     {
         instrument_.setText(text, juce::dontSendNotification);
@@ -152,7 +153,7 @@ void MidiRenderPanel::loadFile(const juce::File& file)
 {
     if (task_.isRunning())
         return;  // a render is using the current sequence
-    auto parsed = realtone::parseMidiFile(std::filesystem::path(file.getFullPathName().toStdString()));
+    auto parsed = realtone::parseMidiFile(toPath(file));
     if (!parsed.ok)
     {
         loaded_ = false;
@@ -321,7 +322,7 @@ void MidiRenderPanel::chooseDestination()
     if (!loaded_ || entry == nullptr || task_.isRunning())
         return;
     const auto folder = juce::File(Settings::get().getString(keys::lastExportFolder, file_.getParentDirectory().getFullPathName()));
-    const auto suggestion = suggestOutputFile(folder.isDirectory() ? folder : file_.getParentDirectory(), file_.getFileNameWithoutExtension(), juce::String(entry->name));
+    const auto suggestion = suggestOutputFile(folder.isDirectory() ? folder : file_.getParentDirectory(), file_.getFileNameWithoutExtension(), realtone::studio::fromStd(entry->name));
     chooser_ = std::make_unique<juce::FileChooser>("Save the rendered audio as WAV", suggestion, "*.wav");
     chooser_->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::warnAboutOverwriting,
                           [safe = juce::Component::SafePointer<MidiRenderPanel>(this)](const juce::FileChooser& fc) {

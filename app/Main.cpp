@@ -1,3 +1,4 @@
+#include "../studio/PathUtil.h"
 #include "MainView.h"
 
 #include "../studio/AppContext.h"
@@ -258,7 +259,7 @@ public:
             for (const auto& entry : e)
                 if (entry.state == realtone::InstallState::Installed)
                 {
-                    context_->processor.chooseInstrument(juce::String(entry.id), true);
+                    context_->processor.chooseInstrument(realtone::studio::fromStd(entry.id), true);
                     break;
                 }
         }

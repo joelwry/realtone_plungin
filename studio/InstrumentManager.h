@@ -54,7 +54,7 @@ public:
     const std::vector<realtone::InstrumentEntry>& entries() const { return catalog_.instruments(); }
     const realtone::InstrumentEntry* find(const juce::String& id) const { return catalog_.find(id.toStdString()); }
     const realtone::LibraryCatalog& catalog() const { return catalog_; }
-    juce::File libraryRoot() const { return juce::File(juce::String(catalog_.libraryRoot().string())); }
+    juce::File libraryRoot() const;
     void setLibraryRoot(const juce::File& dir);
 
     // Selection -------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+#include "../studio/PathUtil.h"
 #include "InstrumentBrowser.h"
 
 #include "InstrumentArt.h"
@@ -240,7 +241,7 @@ void InstrumentBrowser::updateCategories()
     category_.addItem("All categories", 1);
     juce::StringArray cats;
     for (const auto& e : manager_.entries())
-        cats.addIfNotAlreadyThere(juce::String(e.category));
+        cats.addIfNotAlreadyThere(realtone::studio::fromStd(e.category));
     cats.sort(true);
     int id = 2;
     for (const auto& c : cats)
@@ -275,11 +276,11 @@ void InstrumentBrowser::rebuild()
     {
         if (onlyInstalled && e.state != realtone::InstallState::Installed)
             continue;
-        if (cat.isNotEmpty() && juce::String(e.category) != cat)
+        if (cat.isNotEmpty() && realtone::studio::fromStd(e.category) != cat)
             continue;
         if (query.isNotEmpty())
         {
-            juce::String hay = (juce::String(e.name) + " " + juce::String(e.category) + " " + juce::String(e.description)).toLowerCase();
+            juce::String hay = (realtone::studio::fromStd(e.name) + " " + realtone::studio::fromStd(e.category) + " " + realtone::studio::fromStd(e.description)).toLowerCase();
             for (const auto& t : e.tags)
                 hay += " " + juce::String(t).toLowerCase();
             bool all = true;
@@ -289,7 +290,7 @@ void InstrumentBrowser::rebuild()
             if (!all)
                 continue;
         }
-        cards.push_back(std::make_unique<Card>(manager_, e, selected_ == juce::String(e.id), [safe = juce::Component::SafePointer<InstrumentBrowser>(this)](const juce::String& id) {
+        cards.push_back(std::make_unique<Card>(manager_, e, selected_ == realtone::studio::fromStd(e.id), [safe = juce::Component::SafePointer<InstrumentBrowser>(this)](const juce::String& id) {
             // Rebuilding replaces the card that was just clicked, so do it after the click has finished.
             juce::MessageManager::callAsync([safe, id]() {
                 if (safe == nullptr)
