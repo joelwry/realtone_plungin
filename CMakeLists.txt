@@ -19,6 +19,7 @@ endif()
 include(CTest)
 
 add_subdirectory(core)
+add_subdirectory(cli)
 
 if(REALTONE_BUILD_TESTS)
     add_subdirectory(tests)
