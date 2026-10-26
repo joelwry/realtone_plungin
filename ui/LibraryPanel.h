@@ -30,6 +30,7 @@ private:
     void changeListenerCallback(juce::ChangeBroadcaster*) override;
     const realtone::InstrumentEntry* selectedEntry() const;
     void updateDetails();
+    void confirmRemove();
     void chooseLibraryFolder();
     void importSfz();
 

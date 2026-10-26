@@ -23,21 +23,7 @@ LibraryPanel::LibraryPanel(realtone::studio::InstrumentManager& manager) : manag
 
     install_.onClick = [this] { if (auto* e = selectedEntry()) manager_.install(e->id); };
     verify_.onClick = [this] { if (auto* e = selectedEntry()) manager_.verify(e->id); };
-    remove_.onClick = [this] {
-        if (auto* e = selectedEntry())
-        {
-            const juce::String id(e->id);
-            const bool external = e->external;
-            juce::AlertWindow::showOkCancelBox(juce::MessageBoxIconType::QuestionIcon, external ? "Remove from list" : "Remove instrument",
-                                               external ? "Remove this imported instrument from RealTone Studio? Your SFZ and sample files are not touched."
-                                                        : "Delete the downloaded sample files for this instrument from this computer? You can install it again at any time. Files you added yourself are not touched.",
-                                               "Remove", "Cancel", this,
-                                               juce::ModalCallbackFunction::create([this, id, safe = juce::Component::SafePointer<LibraryPanel>(this)](int r) {
-                                                   if (r == 1 && safe != nullptr)
-                                                       manager_.remove(id);
-                                               }));
-        }
-    };
+    remove_.onClick = [this] { confirmRemove(); };
     cancel_.onClick = [this] { manager_.cancelJob(); };
     folder_.onClick = [this] { chooseLibraryFolder(); };
     openFolder_.onClick = [this] { manager_.libraryRoot().createDirectory(); manager_.libraryRoot().revealToUser(); };
@@ -177,6 +163,26 @@ void LibraryPanel::updateDetails()
     verify_.setEnabled(managed && e->state != realtone::InstallState::NotInstalled && !manager_.job().running);
     remove_.setEnabled(e != nullptr && (e->external || e->state != realtone::InstallState::NotInstalled) && !manager_.job().running);
     remove_.setButtonText(e != nullptr && e->external ? "Remove from list" : "Remove");
+}
+
+void LibraryPanel::confirmRemove()
+{
+    const auto* e = selectedEntry();
+    if (e == nullptr)
+        return;
+    const juce::String id(e->id);
+    const bool external = e->external;
+    juce::Component::SafePointer<LibraryPanel> safe(this);
+    auto callback = juce::ModalCallbackFunction::create([safe, id](int r) {
+        if (r == 1 && safe != nullptr)
+            safe->manager_.remove(id);
+    });
+    juce::AlertWindow::showOkCancelBox(
+        juce::MessageBoxIconType::QuestionIcon, external ? "Remove from list" : "Remove instrument",
+        external ? "Remove this imported instrument from RealTone Studio? Your SFZ and sample files are not touched."
+                 : "Delete the downloaded sample files for this instrument from this computer? You can install it again at any time. "
+                   "Files you added yourself are not touched.",
+        "Remove", "Cancel", this, callback);
 }
 
 void LibraryPanel::chooseLibraryFolder()
