@@ -50,3 +50,7 @@ $bytes = [IO.File]::ReadAllBytes($first); $bytes[100] = $bytes[100] -bxor 0xFF; 
 if ($LASTEXITCODE -eq 0) { throw "A corrupted sample was not detected." }
 Write-Host "Corruption detected as expected." -ForegroundColor Green
 Remove-Item $lib -Recurse -Force
+
+# The last native call failed on purpose; do not let its exit code become the script's.
+$global:LASTEXITCODE = 0
+exit 0
