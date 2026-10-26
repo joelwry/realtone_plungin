@@ -101,16 +101,18 @@ $cap = HitTest $h ($r.Left + 120) ($r.Top + 14)
 Check "title bar drags the window" ($cap -eq $HT.CAPTION) "(hit-test $cap)"
 
 # Resizing within, below and above the limits.
-[void][W32]::SetWindowPos($h, [IntPtr]::Zero, 40, 40, 1100, 700, $SWP_NOZORDER -bor $SWP_NOACTIVATE); Settle
+# A size that fits whatever screen this runs on (CI machines are small).
+$tw = [Math]::Min(1000, $screenW - 30); $th = [Math]::Min(680, $screenH - 80)
+[void][W32]::SetWindowPos($h, [IntPtr]::Zero, 10, 10, $tw, $th, $SWP_NOZORDER -bor $SWP_NOACTIVATE); Settle
 $r = Rect $h
-Check "resize to 1100x700" ((($r.Right - $r.Left) -eq 1100) -and (($r.Bottom - $r.Top) -eq 700)) ("(got {0}x{1})" -f ($r.Right - $r.Left), ($r.Bottom - $r.Top))
+Check "resize to ${tw}x${th}" ((($r.Right - $r.Left) -eq $tw) -and (($r.Bottom - $r.Top) -eq $th)) ("(got {0}x{1})" -f ($r.Right - $r.Left), ($r.Bottom - $r.Top))
 [void][W32]::SetWindowPos($h, [IntPtr]::Zero, 40, 40, 300, 200, $SWP_NOZORDER -bor $SWP_NOACTIVATE); Settle
 $r = Rect $h
 Check "cannot shrink below the usable minimum" ((($r.Right - $r.Left) -ge $MinWidth) -and (($r.Bottom - $r.Top) -ge $MinHeight)) ("(got {0}x{1})" -f ($r.Right - $r.Left), ($r.Bottom - $r.Top))
 [void][W32]::SetWindowPos($h, [IntPtr]::Zero, 0, 0, 12000, 9000, $SWP_NOZORDER -bor $SWP_NOACTIVATE); Settle
 $r = Rect $h
 Check "cannot grow beyond the largest screen" ((($r.Right - $r.Left) -le ($screenW + 40)) -and (($r.Bottom - $r.Top) -le ($screenH + 40))) ("(got {0}x{1})" -f ($r.Right - $r.Left), ($r.Bottom - $r.Top))
-[void][W32]::SetWindowPos($h, [IntPtr]::Zero, 60, 60, 1100, 700, $SWP_NOZORDER -bor $SWP_NOACTIVATE); Settle
+[void][W32]::SetWindowPos($h, [IntPtr]::Zero, 10, 10, $tw, $th, $SWP_NOZORDER -bor $SWP_NOACTIVATE); Settle
 
 # Maximise, restore, minimise.
 [void][W32]::ShowWindow($h, $SW_MAXIMIZE); Settle 800
