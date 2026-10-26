@@ -1,0 +1,48 @@
+RealTone Studio - third-party notices
+=====================================
+
+RealTone Studio is built from the components below. Each keeps its own license. This file is
+shown in the application under About.
+
+--------------------------------------------------------------------------------
+JUCE 8.0.4
+https://juce.com   (https://github.com/juce-framework/JUCE)
+
+JUCE is dual licensed by Raw Material Software: AGPLv3 or a commercial license. This build uses
+JUCE under the terms of the GNU Affero General Public License v3 (https://www.gnu.org/licenses/agpl-3.0.html).
+The complete corresponding source code of this program is available from the project repository.
+Anyone who wants to distribute a derived work without releasing its source must obtain a
+commercial JUCE license from Raw Material Software.
+
+JUCE includes or builds on further components (for example HarfBuzz, SheenBidi, FLAC, Ogg Vorbis,
+zlib, libpng, libjpeg and the Steinberg VST3 SDK, which is MIT licensed). Their notices are in the
+JUCE source tree under modules/*/ and in JUCE's LICENSE.md.
+
+VST is a trademark of Steinberg Media Technologies GmbH.
+
+--------------------------------------------------------------------------------
+dr_wav, dr_flac, dr_mp3 (dr_libs)
+https://github.com/mackron/dr_libs
+Copyright David Reid. Public domain (Unlicense) or MIT No Attribution, at your option.
+
+dr_mp3 is based on minimp3 by lieff (CC0 1.0, https://github.com/lieff/minimp3).
+
+--------------------------------------------------------------------------------
+JSON for Modern C++ 3.11.3
+https://github.com/nlohmann/json
+Copyright (c) 2013-2022 Niels Lohmann. MIT License.
+
+--------------------------------------------------------------------------------
+Instrument samples
+--------------------------------------------------------------------------------
+
+VS Chamber Orchestra: Community Edition (VSCO 2 CE), SFZ version
+https://github.com/sgossner/VSCO-2-CE
+Recorded by Sam Gossner and Simon Dalzell. Samples cut by Elan Hickler (Soundemote).
+License: CC0 1.0 Universal (public domain dedication),
+https://creativecommons.org/publicdomain/zero/1.0/
+Attribution is not required by the license; it is given here with thanks.
+
+The samples are not part of the program or its installer. They are downloaded on request from
+the pinned upstream revision listed in the library manifest, and every file is checked against
+a SHA-256 checksum before it is stored. Samples you import yourself are your responsibility.
