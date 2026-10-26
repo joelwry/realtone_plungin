@@ -7,6 +7,7 @@ add_library(realtone_core STATIC
     src/Instrument.cpp
     src/InstrumentProfile.cpp
     src/SamplerEngine.cpp
+    src/InstrumentSwap.cpp
     src/MidiFile.cpp
     src/Renderer.cpp
     src/PitchAnalysis.cpp

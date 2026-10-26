@@ -6,6 +6,7 @@ add_executable(realtone_tests
     MidiRenderTests.cpp
     AnalysisTests.cpp
     RealtimeTests.cpp
+    SwapTests.cpp
 )
 target_link_libraries(realtone_tests PRIVATE realtone_core)
 target_include_directories(realtone_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
