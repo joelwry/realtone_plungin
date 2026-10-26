@@ -52,7 +52,8 @@ juce::Rectangle<int> WindowGeometry::sanitise(juce::Rectangle<int> saved, const 
 
 juce::Point<int> WindowGeometry::maximumSize(const juce::Array<juce::Rectangle<int>>& workAreas)
 {
-    juce::Point<int> m(kPreferredWidth, kPreferredHeight);
+    // The largest monitor's work area, so the window can be maximised anywhere but never exceeds the screen.
+    juce::Point<int> m(workAreas.isEmpty() ? kPreferredWidth : 0, workAreas.isEmpty() ? kPreferredHeight : 0);
     for (const auto& a : workAreas)
     {
         m.x = juce::jmax(m.x, a.getWidth());

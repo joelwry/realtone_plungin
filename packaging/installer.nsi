@@ -78,6 +78,7 @@ FunctionEnd
 Section "${APPNAME} application" SecApp
   SectionIn RO
   SetRegView 64
+  SetShellVarContext all     ; per-machine install: Start menu entry for every user
   SetOutPath "$INSTDIR"
   File "${STAGE}\app\RealTone Studio.exe"
   File "${STAGE}\app\realtone-cli.exe"
@@ -129,6 +130,7 @@ LangString DESC_Vst3 ${LANG_ENGLISH} "The VST3 instrument, installed to C:\Progr
 
 Section "Uninstall"
   SetRegView 64
+  SetShellVarContext all
 
   ; Program files: exactly the ones installed above.
   Delete "$INSTDIR\RealTone Studio.exe"
