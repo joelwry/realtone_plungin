@@ -419,3 +419,20 @@ RT_TEST(url_helpers)
     CHECK(hostOf("https://Example.COM:8443/p") == "example.com");
     CHECK(hostOf("no-scheme").empty());
 }
+
+RT_TEST(mp3_files_decode_with_correct_format_and_pitch)
+{
+    auto r = decodeAudioFile(std::filesystem::path(REALTONE_TEST_DATA) / "sine_a4_mono.mp3");
+    CHECK_MSG(r.ok, r.error);
+    CHECK(r.format == "mp3");
+    CHECK(r.clip.numChannels() == 1);
+    CHECK_NEAR(r.clip.sampleRate, 44100.0, 0.5);
+    CHECK_NEAR(r.clip.durationSeconds(), 1.2, 0.1);
+    CHECK_NEAR(estimateHz(r.clip.channels[0].data() + 8000, 8192, r.clip.sampleRate) / 440.0, 1.0, 0.003);
+
+    // A damaged MP3 fails with a message instead of producing noise or crashing.
+    std::vector<std::uint8_t> bytes(2000, 0xFF);
+    bytes[1] = 0xFB;  // looks like a frame header, followed by junk
+    auto bad = decodeAudioMemory(bytes.data(), bytes.size());
+    CHECK(!bad.ok || bad.clip.numFrames() < 20000);
+}

@@ -16,3 +16,5 @@ if(NOT MSVC)
 endif()
 
 add_test(NAME realtone_tests COMMAND realtone_tests)
+
+target_compile_definitions(realtone_tests PRIVATE REALTONE_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/data")
