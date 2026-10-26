@@ -1,0 +1,11 @@
+build/
+build-*/
+out/
+dist/
+.vs/
+.vscode/
+*.user
+CMakeUserPresets.json
+# locally installed sample libraries are never committed
+libraries/installed/
+*.sfz.cache
