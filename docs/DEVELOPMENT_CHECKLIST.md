@@ -52,7 +52,7 @@ Status against the original plan. `[x]` is done and tested, `[~]` partly, `[ ]` 
 
 ## Release
 - [x] Installer and portable zip built by CI, SHA-256 sums
-- [x] Install/uninstall verified on a Windows runner
+- [x] Silent install, reinstall and uninstall verified on a Windows runner (user data and unrelated plug-ins untouched)
 - [ ] Code signing (needs a certificate; the build script signs when one is supplied)
 - [ ] Project license chosen and added (blocks public binaries; see DEPENDENCIES)
 - [ ] Manual host testing in FL Studio and REAPER

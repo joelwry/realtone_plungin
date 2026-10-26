@@ -81,4 +81,14 @@ moving between two monitors of different DPI.
 
 ## Results
 
-Recorded per release in the [changelog](../CHANGELOG.md) and in the CI run for the tag.
+Latest full CI run (Linux Ubuntu 24.04, Windows Server 2022 with MSVC 19.44), all green:
+
+- Linux: core tests, studio tests, pluginval strictness 10 including editor tests.
+- Windows: build with MSVC; core tests; studio tests; real-library check (download, SHA-256 verify, render, corruption detected);
+  pluginval strictness 10 without GUI tests and again with editor tests; installer: silent install, files and registry,
+  Start menu entry, unrelated plug-in untouched, pluginval strictness 5 on the installed copy, native-window checks on the
+  installed executable, reinstall, silent uninstall, user data untouched.
+- The window checks ran on a 1024x768, 96 dpi virtual display. They are Win32 messages sent by a script, not a mouse.
+- The CI runner's pluginval.exe returns exit code 1 even after printing `SUCCESS`, so CI reads the verdict from its output.
+
+Not covered by any of the above: the manual checklist. Results of manual runs belong in the changelog.

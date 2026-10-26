@@ -25,9 +25,9 @@ instrument library is deliberately small because every sound has to be redistrib
 | Library installer (download, SHA-256 check, repair, remove, import your own SFZ) | Working |
 | MIDI file to WAV | Working (format 0 and 1) |
 | Audio to instrument | Working for clean monophonic sources. Polyphonic transcription is **not** implemented |
-| VST3 | Builds, passes pluginval at strictness 10 on Linux and Windows CI |
-| Resizable native window, resizable plug-in editor | Working. Message-level checks run in CI; see [TESTING](docs/TESTING.md) for what still needs hands-on testing |
-| Installer, portable zip, checksums | Built and tested by CI. Binaries are **not code signed** |
+| VST3 | Builds on Linux and Windows. pluginval at strictness 10 (including editor tests) passes in CI on both |
+| Resizable native window, resizable plug-in editor | Working. Win32 message-level checks pass in CI on Windows; dragging by mouse, display scaling, multi-monitor and real DAW hosts are **not yet tested by hand** (see [TESTING](docs/TESTING.md)) |
+| Installer, portable zip, checksums | Built by CI; silent install, reinstall and uninstall are verified on a Windows runner. Binaries are **not code signed** and no release has been published yet |
 | Audacity effect plug-in for conversion | Not built. See [ARCHITECTURE](docs/ARCHITECTURE.md#why-there-is-no-audacity-effect) |
 | MP3 export | Not implemented (WAV only) |
 

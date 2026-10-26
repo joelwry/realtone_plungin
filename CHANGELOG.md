@@ -21,7 +21,7 @@ First public version.
   drag and drop, audio and MIDI device selection.
 - `realtone-cli` for rendering, converting, analysing and verifying libraries.
 - 20 instruments from VSCO 2 Community Edition (CC0).
-- Windows installer (NSIS) and portable zip, built and tested by CI.
+- Windows installer (NSIS) and portable zip, built by CI; install, reinstall and uninstall are checked on a Windows runner.
 
 ### Known limits
 - Samples are loaded into memory in full; there is no disk streaming yet. The upright piano uses about 320 MB.
@@ -30,3 +30,4 @@ First public version.
 - Audio conversion handles one melodic line at a time. Chords, drums and full mixes are not transcribed.
 - No MP3 export. No Audacity effect plug-in.
 - Binaries are not code signed, so Windows SmartScreen may warn on first run.
+- Not yet tested by hand: mouse dragging and resizing, display scaling above 100%, multiple monitors, FL Studio and REAPER (the Windows checks are automated Win32 messages on a 1024x768 virtual display).
