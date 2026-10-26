@@ -58,8 +58,10 @@ Check "unrelated plug-in untouched" ((Test-Path $otherFile) -and ((Get-FileHash 
 
 if ($Pluginval) {
     Step "pluginval on the installed VST3"
-    & $Pluginval --strictness-level 5 --skip-gui-tests --validate-in-process --timeout-ms 120000 $bundle
-    Check "pluginval strictness 5 (without GUI tests)" ($LASTEXITCODE -eq 0) "(exit $LASTEXITCODE)"
+    # The Windows pluginval build is a GUI-subsystem program; read the verdict from its output.
+    $out = (& $Pluginval --strictness-level 5 --skip-gui-tests --validate-in-process --timeout-ms 120000 $bundle 2>&1 | Out-String)
+    Write-Host $out
+    Check "pluginval strictness 5 (without GUI tests)" ($out -match "(?m)^SUCCESS\s*$")
 }
 
 Step "Installed application: native window behaviour"
